@@ -3,6 +3,8 @@ import logging
 import os
 import re
 
+from config import log_path
+
 
 class Log:
     _logger = None
@@ -46,9 +48,8 @@ class Log:
         @param file_name: name of the file
         @return: name of the file with the counter
         """
-        path = "log/"
         extension = '.log'
-        files = fnmatch.filter(os.listdir(path), file_name + '*')
+        files = fnmatch.filter(os.listdir(log_path), file_name + '*')
 
         if len(files) == 0:
             count = 1
@@ -56,5 +57,4 @@ class Log:
             for i, file in enumerate(files, start=0):
                 files[i] = int(re.search(file_name + '(.+?)' + extension, file).group(1))
             count = max(files) + 1
-
-        return '{}{}{}{}'.format(path, file_name, count, extension)
+        return f'{log_path}/{file_name}{count}{extension}'

@@ -1,17 +1,16 @@
+import os
+
 from dotenv import load_dotenv
 from gpt_index import SimpleDirectoryReader, GPTSimpleVectorIndex, LLMPredictor, PromptHelper, ServiceContext
 from langchain import OpenAI
 
+from config import *
 from log import Log
 from transcriber import Transcriber
 from videos import Videos
 
 
 class MakeIndex:
-    transcriptions_path = './data/transcriptions'
-    audios_path = "./data/audios"
-    videos_file = "./data/videos.txt"
-    index_file = "./data/index.json"
 
     def __init__(self, model_name='text-ada-001', max_tokens=256, max_input_size=4096,
                  max_chunk_overlap=20, chunk_size_limit=600, temperature=0):
@@ -35,12 +34,13 @@ class MakeIndex:
         """
         Creates the index of information for the ChatBot
         """
+        self.check_paths_existence()
 
         Log.log('Indexing...')
 
         # Transcribes all videos in the list
-        Videos.load_videos(self.videos_file)
-        Transcriber.load_transcriptions(self.videos_file, self.audios_path, self.transcriptions_path)
+        Videos().get_videos_lists()
+        Transcriber.load_transcriptions()
 
         # define Prompt Helper
         prompt_helper = PromptHelper(
@@ -51,14 +51,33 @@ class MakeIndex:
             temperature=self.temperature, model_name=self.model_name, max_tokens=self.max_tokens))
 
         # Loads all transcriptions
-        documents = SimpleDirectoryReader(self.transcriptions_path).load_data()
+        documents = SimpleDirectoryReader(transcriptions_path).load_data()
 
         # Creates the index
         service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, prompt_helper=prompt_helper)
         idx = GPTSimpleVectorIndex.from_documents(documents, service_context=service_context)
-        idx.save_to_disk(self.index_file)
+        idx.save_to_disk(index_file)
 
         Log.log('Indexed!')
+
+    @staticmethod
+    def check_paths_existence():
+        """
+        Check if all paths necessary exists. If any doesn't exist create it
+        """
+        MakeIndex._check_path_existence(audios_path)
+        MakeIndex._check_path_existence(log_path)
+        MakeIndex._check_path_existence(transcriptions_path)
+        MakeIndex._check_path_existence(videos_list_path)
+
+    @staticmethod
+    def _check_path_existence(path):
+        """
+        Check if a path exists. If it doesn't exist create it
+        :param path: path to create if necessary
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 
 if __name__ == '__main__':

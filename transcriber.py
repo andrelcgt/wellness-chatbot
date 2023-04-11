@@ -1,45 +1,27 @@
-import json
 import os
 
+import pandas as pd
 import whisper
 from pytube import YouTube
 
+from config import *
 from log import Log
 
 
 class Transcriber:
-    def __init__(self, video_id, video_title, video_description, audios_path, transcriptions_path, model_size="base"):
+    def __init__(self, video_url, video_title, model_size="base"):
         """
         Object to download a video from YouTube, convert to mp3 and transcribe its content
-        :param video_id: Video's YouTube ID
+        :param video_url: Video's YouTube URL
         :param video_title: Video's title
-        :param video_description: Video's description
-        :param audios_path: Path to save audio files
-        :param transcriptions_path: Path to save transcription files
         """
-        self.video_id = video_id
+        self.transcription = ''
+        self.video_url = video_url
         self.video_title = video_title
         video_title_name = "".join(x for x in video_title if x.isalnum())
-        self.video_description = video_description
-        self.audios_path = audios_path
-        self.audio_file = os.path.join(self.audios_path, f"{video_title_name}.mp3")
-        self.transcription = ''
-        self.transcriptions_path = transcriptions_path
-        self.transcription_file = os.path.join(self.transcriptions_path, f"{video_title_name}.txt")
-        self.check_paths_existence()
+        self.audio_file = os.path.join(audios_path, f"{video_title_name}.mp3")
+        self.transcription_file = os.path.join(transcriptions_path, f"{video_title_name}.txt")
         self.whisper_model = whisper.load_model(model_size)
-
-    def check_paths_existence(self):
-        """
-        Check and Create necessary folders to save the files.
-        """
-        # Create audios folder in case it does not exist
-        if not os.path.exists(self.audios_path):
-            os.makedirs(self.audios_path)
-
-        # Create transcriptions folder in case it does not exist
-        if not os.path.exists(self.transcriptions_path):
-            os.makedirs(self.transcriptions_path)
 
     def download_mp3(self):
         """
@@ -58,12 +40,12 @@ class Transcriber:
         try:
             # Streaming video from YouTube
             Log.log(f"Streaming video for {self.video_title}...")
-            yt = YouTube(f"https://www.youtube.com/watch?v={self.video_id}")
+            yt = YouTube(self.video_url)
             video = yt.streams.filter(only_audio=True).first()
 
             # Downloading audio from the YouTube stream
             Log.log(f"Downloading audio for {self.video_title}...")
-            out_file = video.download(output_path=self.audios_path)
+            out_file = video.download(output_path=audios_path)
 
             # Renaming to the expected audio file name
             os.rename(out_file, self.audio_file)
@@ -80,7 +62,7 @@ class Transcriber:
             Log.log(f"{self.video_title}.txt already exists. Skipping transcription.")
 
         # Checking if the audio file exists
-        elif not os.path.exists(self.audios_path):
+        elif not os.path.exists(self.audio_file):
             Log.log(f"{self.video_title}.mp3 doesn't exists. Skipping transcription.")
 
         # Transcribing
@@ -95,9 +77,11 @@ class Transcriber:
         :param delete_audio: If True deletes the audio file after the transcription
         """
         if self.transcription != '':
-            with open(self.transcription_file, "w") as f:
+            yt = YouTube(self.video_url)
+            with open(self.transcription_file, "w", encoding="utf-8") as f:
+                f.write(f"Video Author: {yt.author}\n")
                 f.write(f"Video Title: {self.video_title}\n")
-                f.write(f"Video Description: {self.video_description}\n")
+                f.write(f"Video Description: {yt.description}\n")
                 f.write("Transcription:\n")
                 f.write(self.transcription)
             Log.log(f"{self.video_title} transcription has been successfully saved.")
@@ -107,21 +91,21 @@ class Transcriber:
                 os.remove(self.audio_file)
 
     @staticmethod
-    def load_transcriptions(videos_file, audios_path, transcriptions_path):
+    def load_transcriptions():
         """
-        Transcribes all videos in the videos_file
-        :param videos_file: Path to the videos file
-        :param audios_path: Path to save audio files
-        :param transcriptions_path: Path to save transcription files
+        Transcribes all videos
         """
-        # Load videos list from file
-        with open(videos_file, "r") as f:
-            videos_list = json.load(f)
+
+        videos_files = os.listdir(videos_list_path)
+        videos_db = pd.DataFrame()
+        for file in videos_files:
+            file = os.path.join(videos_list_path, file)
+            orders_db = pd.read_csv(file)
+            videos_db = videos_db.append(orders_db)
 
         # Process each video
-        for video in videos_list:
-            transcriber = Transcriber(video["id"], video["title"], video["description"],
-                                      audios_path, transcriptions_path)
+        for index, video in videos_db.iterrows():
+            transcriber = Transcriber(video["Video URL"], video["Video Title"])
             transcriber.download_mp3()
             transcriber.transcribe_audio()
             transcriber.save_transcription()

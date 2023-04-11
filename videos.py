@@ -1,60 +1,47 @@
-import json
 import os
+import shutil
 
-from googleapiclient.discovery import build
+from yt_videos_list import ListCreator
 
+from config import *
 from log import Log
 
 
 class Videos:
     channel_id = 'UCxHTM1FYxeC4F7xDsBVltGg'
 
-    def __init__(self, videos_file):
+    def __init__(self, driver='chrome'):
         """
         Object to create a list of video files from YouTube
-        :param videos_file: Path to the videos file
+        :param driver: Driver to use to scrape YouTube
         """
-        # Access to YouTube
-        self.youtube = build('youtube', 'v3', developerKey=os.environ['YOUTUBE-KEY-FILE'])
-        self.videos_file = videos_file
+        self.driver = driver
 
-    def get_videos_list(self, channel_id):
+    def get_videos_lists(self):
         """
-        Gets the list of videos from the channel_id
-        :param channel_id: ID of the YouTube channel
+        Gets video list files from YouTube
         """
-        Log.log(f"Getting videos list for channel_id:{channel_id}...")
+        Log.log("Getting videos list ...")
 
-        request = self.youtube.search().list(
-            part='snippet',
-            channelId=channel_id,
-            type='video',
-            videoDuration='long',
-            maxResults=500
-        )
-        response = request.execute()
+        # Create csv and log file for each YouTube channel in channels_file
+        lc = ListCreator(driver=self.driver, txt=False, md=False, headless=True,
+                         all_video_data_in_memory=True, video_data_returned=True)
+        lc.create_list_from(path_to_channel_urls_file=channels_file)
 
-        # Parse the response
-        videos = []
-        for item in response['items']:
-            video_id = item['id']['videoId']
-            video_title = item['snippet']['title']
-            video_description = item['snippet']['description']
-            videos.append({'id': video_id,
-                           'title': video_title,
-                           'description': video_description})
-
-        # Write the video data to a text file
-        with open(self.videos_file, 'w') as f:
-            json.dump(videos, f, indent=2)
-
-        Log.log(f"{self.channel_id} videos list has been successfully saved.")
+        # Move csv and log files to correct folder
+        self._move_files('.log', log_path)
+        self._move_files('.csv', videos_list_path)
+        Log.log("Videos list has been successfully saved.")
 
     @staticmethod
-    def load_videos(videos_file):
+    def _move_files(ext, destination_path):
         """
-        Loads video files from YouTube
-        :param videos_file: Path to the videos file
+        Move files from ext extension to destination_path
+        :param ext: extension of the files
+        :param destination_path: Path to move the files
         """
-        videos_list = Videos(videos_file)
-        videos_list.get_videos_list(Videos.channel_id)
+        source_path = './'
+        source_files = os.listdir(source_path)
+        for file in source_files:
+            if file.endswith(ext):
+                shutil.move(os.path.join(source_path, file), os.path.join(destination_path, file))
