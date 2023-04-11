@@ -15,6 +15,8 @@ class Log:
         """
         if cls._logger is None:
             handlers = [logging.FileHandler(cls._get_file_name(name), 'w', 'utf-8')]
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
             logging.basicConfig(handlers=handlers, format='%(asctime)s %(message)s')
             cls._logger = logging.getLogger()
             cls._logger.setLevel(logging.INFO)
