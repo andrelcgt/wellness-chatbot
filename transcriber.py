@@ -6,11 +6,9 @@ from pytube import YouTube
 
 from log import Log
 
-whisper_model = whisper.load_model("small")
-
 
 class Transcriber:
-    def __init__(self, video_id, video_title, video_description, audios_path, transcriptions_path):
+    def __init__(self, video_id, video_title, video_description, audios_path, transcriptions_path, model_size="base"):
         """
         Object to download a video from YouTube, convert to mp3 and transcribe its content
         :param video_id: Video's YouTube ID
@@ -29,6 +27,7 @@ class Transcriber:
         self.transcriptions_path = transcriptions_path
         self.transcription_file = os.path.join(self.transcriptions_path, f"{video_title_name}.txt")
         self.check_paths_existence()
+        self.whisper_model = whisper.load_model(model_size)
 
     def check_paths_existence(self):
         """
@@ -86,7 +85,7 @@ class Transcriber:
 
         # Transcribing
         else:
-            result = whisper_model.transcribe(self.audio_file)
+            result = self.whisper_model.transcribe(self.audio_file)
             self.transcription = result["text"]
             Log.log(f"{self.video_title} has been successfully transcribed.")
 
