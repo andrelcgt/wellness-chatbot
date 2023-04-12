@@ -28,7 +28,8 @@ label = "Wellness SmartChat"
 
 # Starting Prompt
 starting_prompt = "Ignore all previous instructions. You are a Wellness Expert, with 20 years helping people improve " \
-                  "their health. Your task is to help USER answering their questions. Be very helpful and motivating."
+                  "their health. Your task is to help USER answering their questions. Be very helpful and motivating. "\
+                  "Do not respond now, this is only your configuration. Respond to the next questions. "
 
 # AI Config
 
@@ -41,6 +42,7 @@ max_input_size = 4096
 max_tokens = 256
 max_chunk_overlap = 20
 chunk_size_limit = 600
+model_size = "tiny"
 
 # define Prompt Helper
 prompt_helper = PromptHelper(max_input_size, max_tokens, max_chunk_overlap, chunk_size_limit=chunk_size_limit)

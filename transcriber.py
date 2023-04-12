@@ -8,7 +8,7 @@ from config import *
 
 
 class Transcriber:
-    def __init__(self, video_url, video_title, model_size="base"):
+    def __init__(self, video_url, video_title):
         """
         Object to download a video from YouTube, convert to mp3 and transcribe its content
         :param video_url: Video's YouTube URL
@@ -28,12 +28,12 @@ class Transcriber:
         """
         # In case there is already a transcription file it is not necessary to download the audio file
         if os.path.exists(self.transcription_file):
-            Log.log(f"{self.video_title}.txt already exists. Skipping download.")
+            Log.log(f"Skipping download. {self.video_title}.txt already exists.")
             return
 
         # In case there is already an audio file it is not necessary to download again
         if os.path.exists(self.audio_file):
-            Log.log(f"{self.video_title}.mp3 already exists. Skipping download.")
+            Log.log(f"Skipping download. {self.video_title}.mp3 already exists.")
             return
 
         try:
@@ -48,7 +48,7 @@ class Transcriber:
 
             # Renaming to the expected audio file name
             os.rename(out_file, self.audio_file)
-            Log.log(f"{self.video_title}.mp3 has been successfully downloaded.")
+            Log.log(f"Successfully downloaded {self.video_title}.mp3")
         except Exception as e:
             Log.log(f"Error downloading audio for {self.video_title}: {e}", level='exception')
 
@@ -58,17 +58,17 @@ class Transcriber:
         """
         # Checking if the transcription file already exists
         if os.path.exists(self.transcription_file):
-            Log.log(f"{self.video_title}.txt already exists. Skipping transcription.")
+            Log.log(f"Skipping transcription. {self.video_title}.txt already exists.")
 
         # Checking if the audio file exists
         elif not os.path.exists(self.audio_file):
-            Log.log(f"{self.video_title}.mp3 doesn't exists. Skipping transcription.")
+            Log.log(f"Skipping transcription. {self.video_title}.mp3 doesn't exists.")
 
         # Transcribing
         else:
             result = self.whisper_model.transcribe(self.audio_file)
             self.transcription = result["text"]
-            Log.log(f"{self.video_title} has been successfully transcribed.")
+            Log.log(f"Successfully transcribed {self.video_title}.")
 
     def save_transcription(self, delete_audio=True):
         """
@@ -84,7 +84,7 @@ class Transcriber:
                 f.write(f"Video Description: {yt.description}\n")
                 f.write("Transcription:\n")
                 f.write(self.transcription)
-            Log.log(f"{self.video_title} transcription has been successfully saved.")
+            Log.log(f"Transcription has been successfully saved for {self.video_title}.")
 
             # Deletes the audio file
             if delete_audio and os.path.exists(self.transcription_file) and os.path.exists(self.audio_file):
