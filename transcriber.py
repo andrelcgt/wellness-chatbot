@@ -5,7 +5,6 @@ import whisper
 from pytube import YouTube
 
 from config import *
-from log import Log
 
 
 class Transcriber:
@@ -81,6 +80,7 @@ class Transcriber:
             with open(self.transcription_file, "w", encoding="utf-8") as f:
                 f.write(f"Video Author: {yt.author}\n")
                 f.write(f"Video Title: {self.video_title}\n")
+                f.write(f"Video URL: {self.video_url}\n")
                 f.write(f"Video Description: {yt.description}\n")
                 f.write("Transcription:\n")
                 f.write(self.transcription)
@@ -100,8 +100,8 @@ class Transcriber:
         videos_db = pd.DataFrame()
         for file in videos_files:
             file = os.path.join(videos_list_path, file)
-            orders_db = pd.read_csv(file)
-            videos_db = videos_db.append(orders_db)
+            videos = pd.read_csv(file)
+            videos_db = pd.concat([videos_db, videos], ignore_index=True)
 
         # Process each video
         for index, video in videos_db.iterrows():

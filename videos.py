@@ -4,7 +4,6 @@ import shutil
 from yt_videos_list import ListCreator
 
 from config import *
-from log import Log
 
 
 class Videos:
