@@ -1,4 +1,4 @@
-# Wellness SmartChat
+# Wellness ChatBot
 A Chatbot using AI to ask questions about Wellness
 
 This project is to explore the capabilities of Chat-GPT with sources of Wellness information.
